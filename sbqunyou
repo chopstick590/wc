@@ -1,0 +1,127 @@
+
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local Camera = workspace.CurrentCamera
+
+local Settings = {
+    OuterRadius = 125,
+    InnerRadius = 75,
+    LockStrength = 0.22,
+    MaxDistance = 150,
+    WallCheck = true,
+    IgnoreFriend = true,
+    AimEnabled = false
+}
+
+local function IsFriend(player)
+	return Players.LocalPlayer:IsFriendsWith(player.UserId)
+end
+
+local function HasLineOfSight(targetPart)
+    local localPlr = Players.LocalPlayer
+    if not localPlr.Character then return false end
+    local ray = Ray.new(Camera.CFrame.Position, targetPart.Position - Camera.CFrame.Position)
+    local hit = workspace:FindPartOnRayWithIgnoreList(ray, {localPlr.Character})
+    if not hit then return true end
+    return hit:IsDescendantOf(targetPart.Parent)
+end
+
+local function GetNearestEnemyTorso()
+    local LocalPlayer = Players.LocalPlayer
+    local closestTorso = nil
+    local minScreenDist = math.huge
+    local screenCenter = Camera.ViewportSize / 2
+
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr == LocalPlayer then continue end
+        if Settings.IgnoreFriend and IsFriend(plr) then continue end
+
+        local char = plr.Character
+        if not char then continue end
+        local torso = char:FindFirstChild("HumanoidRootPart")
+        if not torso then continue end
+
+        local worldDist = (torso.Position - Camera.CFrame.Position).Magnitude
+        if worldDist > Settings.MaxDistance then continue end
+
+        if Settings.WallCheck and not HasLineOfSight(torso) then continue end
+
+        local screenPos, inView = Camera:WorldToViewportPoint(torso.Position)
+        local screenV2 = Vector2.new(screenPos.X, screenPos.Y)
+        local crossDist = (screenV2 - screenCenter).Magnitude
+        if not (crossDist <= Settings.OuterRadius and inView) then continue end
+
+        if crossDist < minScreenDist then
+            minScreenDist = crossDist
+            closestTorso = torso
+        end
+    end
+    return closestTorso
+end
+
+UserInputService.InputBegan:Connect(function(input,gpe)
+	if gpe then return end
+    if input.KeyCode == Enum.KeyCode.Z then
+        Settings.AimEnabled = true
+        print("自瞄：已开启")
+    elseif input.KeyCode == Enum.KeyCode.X then
+        Settings.AimEnabled = false
+        print("自瞄：已关闭")
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+	pcall(function()
+		if not Settings.AimEnabled then return end
+		local target = GetNearestEnemyTorso()
+		if not target then return end
+		local targetLook = CFrame.new(Camera.CFrame.Position, target.Position)
+		Camera.CFrame = Camera.CFrame:Lerp(targetLook, Settings.LockStrength)
+	end)
+end)
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local Camera = workspace.CurrentCamera
+
+local Settings = {
+    OuterRadius = 125,
+    InnerRadius = 75,
+    LockStrength = 0.22,
+    MaxDistance = 150,
+    WallCheck = true,
+    IgnoreFriend = true,
+    AimEnabled = false
+}
+
+local function IsFriend(player)
+	return Players.LocalPlayer:IsFriendsWith(player.UserId)
+end
+
+local function HasLineOfSight(targetPart)
+    local localPlr = Players.LocalPlayer
+    if not localPlr.Character then return false end
+    local ray = Ray.new(Camera.CFrame.Position, targetPart.Position - Camera.CFrame.Position)
+    local hit = workspace:FindPartOnRayWithIgnoreList(ray, {localPlr.Character})
+    if not hit then return true end
+    return hit:IsDescendantOf(targetPart.Parent)
+end
+
+local function GetNearestEnemyTorso()
+    local LocalPlayer = Players.LocalPlayer
+    local closestTorso = nil
+    local minScreenDist = math.huge
+    local screenCenter = Camera.ViewportSize / 2
+
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr == LocalPlayer then continue end
+        if Settings.IgnoreFriend and IsFriend(plr) then continue end
+
+        local char = plr.Character
+        if not char then continue end
+        local torso = char:FindFirstChild("HumanoidRootPart")
+        if not torso then continue end
+
+        local worldDist = (torso.Position - Camera.CFrame.Position).Magnitude
+        if worldDist > Settings.MaxDista
