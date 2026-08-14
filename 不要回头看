@@ -1,0 +1,148 @@
+local v1 = game:GetService("ReplicatedStorage")
+local v2 = game:GetService("Players")
+local v3 = game:GetService("RunService")
+local v4 = game:GetService("Workspace")
+local v5 = game:GetService("UserInputService")
+local v6 = game:GetService("CoreGui")
+
+local r1 = v1:WaitForChild("FH_Remotes"):WaitForChild("PlayRequest")
+local r2 = false
+local r3 = 67
+local r4 = false
+local r5 = 5
+local r6 = 500
+
+local c1 = Instance.new("ScreenGui")
+c1.Name = "Panel"
+c1.ResetOnSpawn = false
+c1.Parent = v6
+
+local c2 = Instance.new("Frame")
+c2.Size = UDim2.new(0, 220, 0, 90)
+c2.Position = UDim2.new(0, 20, 0, 20)
+c2.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+c2.BorderSizePixel = 0
+c2.Parent = c1
+
+local c3 = Instance.new("TextButton")
+c3.Size = UDim2.new(0, 60, 0, 22)
+c3.Position = UDim2.new(0, 10, 0, 10)
+c3.BackgroundColor3 = Color3.fromRGB(40, 120, 60)
+c3.BorderSizePixel = 0
+c3.Text = "关"
+c3.TextColor3 = Color3.fromRGB(255, 255, 255)
+c3.Font = Enum.Font.GothamBold
+c3.TextSize = 12
+c3.Parent = c2
+
+local c4 = Instance.new("TextLabel")
+c4.Size = UDim2.new(0, 60, 0, 18)
+c4.Position = UDim2.new(0, 10, 0, 42)
+c4.BackgroundTransparency = 1
+c4.Text = "半径"
+c4.TextColor3 = Color3.fromRGB(200, 200, 200)
+c4.Font = Enum.Font.Gotham
+c4.TextSize = 12
+c4.TextXAlignment = Enum.TextXAlignment.Left
+c4.Parent = c2
+
+local c5 = Instance.new("TextBox")
+c5.Size = UDim2.new(0, 50, 0, 18)
+c5.Position = UDim2.new(1, -60, 0, 42)
+c5.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+c5.BorderSizePixel = 0
+c5.Text = tostring(r3)
+c5.TextColor3 = Color3.fromRGB(255, 255, 255)
+c5.Font = Enum.Font.Gotham
+c5.TextSize = 12
+c5.Parent = c2
+
+local c6 = Instance.new("Frame")
+c6.Size = UDim2.new(1, -20, 0, 4)
+c6.Position = UDim2.new(0, 10, 0, 72)
+c6.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
+c6.BorderSizePixel = 0
+c6.Parent = c2
+
+local c7 = Instance.new("TextButton")
+c7.Size = UDim2.new(0, 12, 0, 16)
+c7.Position = UDim2.new(0, -6, 0, -6)
+c7.BackgroundColor3 = Color3.fromRGB(120, 200, 255)
+c7.BorderSizePixel = 0
+c7.Text = ""
+c7.Parent = c6
+
+local function r7()
+    local v7 = (r3 - r5) / (r6 - r5)
+    c7.Position = UDim2.new(v7, -6, 0, -6)
+end
+r7()
+
+c6.InputBegan:Connect(function(v8)
+    if v8.UserInputType == Enum.UserInputType.MouseButton1 then
+        r4 = true
+    end
+end)
+c6.InputEnded:Connect(function(v9)
+    if v9.UserInputType == Enum.UserInputType.MouseButton1 then
+        r4 = false
+    end
+end)
+
+v5.InputChanged:Connect(function(v10)
+    if r4 and v10.UserInputType == Enum.UserInputType.MouseMovement then
+        local v11 = v10.Position.X
+        local v12 = c6.AbsolutePosition.X
+        local v13 = c6.AbsoluteSize.X
+        local v14 = math.clamp((v11 - v12) / v13, 0, 1)
+        r3 = math.floor(r5 + v14 * (r6 - r5))
+        c5.Text = tostring(r3)
+        r7()
+    end
+end)
+
+c5.FocusLost:Connect(function()
+    local v15 = tonumber(c5.Text)
+    if v15 then
+        r3 = math.clamp(math.floor(v15), r5, r6)
+    end
+    c5.Text = tostring(r3)
+    r7()
+end)
+
+c3.MouseButton1Click:Connect(function()
+    r2 = not r2
+    if r2 then
+        c3.Text = "开"
+        c3.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+    else
+        c3.Text = "关"
+        c3.BackgroundColor3 = Color3.fromRGB(40, 120, 60)
+    end
+end)
+
+v3.Heartbeat:Connect(function()
+    if not r2 then return end
+    local v16 = v2.LocalPlayer
+    local v17 = v16.Character
+    if not v17 then return end
+    local v18 = v17:FindFirstChild("HumanoidRootPart")
+    if not v18 then return end
+    local v19 = v18.Position
+    local v25 = v4:FindFirstChild("Entities")
+    if not v25 then return end
+    for _, v22 in ipairs(v25:GetChildren()) do
+        if v22:IsA("Model") then
+            local v23 = v22:FindFirstChildOfClass("Humanoid")
+            if v23 and v23.Health > 0 then
+                local v24 = v22:FindFirstChild("HumanoidRootPart") or v22:FindFirstChild("Torso") or v22:FindFirstChild("UpperTorso")
+                if v24 and (v24.Position - v19).Magnitude <= r3 then
+                    pcall(function()
+                        r1:FireServer()
+                    end)
+                    return
+                end
+            end
+        end
+    end
+end)
